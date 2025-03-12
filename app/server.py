@@ -232,7 +232,7 @@ async def batch_download(cmd: DownloadRequest):
             },
             ...
         ],
-        "folder": "optional/subfolder/path"  # Optional folder to save files /home/manus/upload/optional/subfolder/
+        "folder": "optional/subfolder/path"  # Optional folder to save files /home/ubuntu/upload/optional/subfolder/
     }
     """
     try:
@@ -240,7 +240,7 @@ async def batch_download(cmd: DownloadRequest):
         
         async def download_file(client, item):
             file_name = os.path.basename(item.filename)
-            base_path = "/home/manus/upload/"
+            base_path = "/home/ubuntu/upload/"
             target_path = base_path
             
             if hasattr(cmd, "folder") and cmd.folder:

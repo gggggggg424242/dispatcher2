@@ -13,7 +13,7 @@ from app.models import PartUploadResult, PresignedUrlPart
 logger = logging.getLogger(__name__)
 
 # Define the local storage directory
-LOCAL_STORAGE_DIR = os.path.join('/home/manus', 'local_storage')
+LOCAL_STORAGE_DIR = os.path.join('/home/ubuntu', 'local_storage')
 if not os.path.exists(LOCAL_STORAGE_DIR):
     os.makedirs(LOCAL_STORAGE_DIR, exist_ok=True)
 
