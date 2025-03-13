@@ -38,11 +38,13 @@ class ViewportInfo(BaseModel):
 
 @dataclass
 class DOMHistoryElement:
+    # Required fields first
     tag_name: str
     xpath: str
-    highlight_index: Optional[int]
     entire_parent_branch_path: list[str]
     attributes: dict[str, str]
+    # Optional fields after
+    highlight_index: Optional[int] = None
     shadow_root: bool = False
     css_selector: Optional[str] = None
     page_coordinates: Optional[CoordinateSet] = None

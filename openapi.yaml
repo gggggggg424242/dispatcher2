@@ -9,11 +9,11 @@ info:
 servers:
   - url: http://localhost:8330
 paths:
-  /file/upload_to_s3:
+  /file/upload:
     post:
-      summary: Upload File to S3
+      summary: Upload File to Local Storage
       description: >
-        Upload a file to S3. If the file size exceeds a predefined threshold, returns information to perform a multipart upload.
+        Upload a file to local storage. If the file size exceeds a predefined threshold, returns information to perform a multipart upload.
       requestBody:
         required: true
         content:
@@ -23,11 +23,8 @@ paths:
               properties:
                 file_path:
                   type: string
-                presigned_url:
-                  type: string
               required:
                 - file_path
-                - presigned_url
       responses:
         '200':
           description: Successful file upload or multipart upload info returned.
@@ -35,16 +32,24 @@ paths:
           description: File not found.
         '500':
           description: Upload failed.
-  /file/multipart_upload_to_s3:
+  /file/multipart_upload:
     post:
-      summary: Multipart Upload to S3
-      description: Upload file parts using presigned URLs for multipart uploads.
+      summary: Multipart Upload to Local Storage
+      description: Upload file parts to local storage for multipart uploads.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MultipartUploadRequest'
+              type: object
+              properties:
+                file_path:
+                  type: string
+                part_size:
+                  type: integer
+              required:
+                - file_path
+                - part_size
       responses:
         '200':
           description: All parts uploaded successfully.
@@ -153,20 +158,32 @@ paths:
       responses:
         '200':
           description: Service is healthy.
-  /zip-and-upload:
+  /zip-file:
     post:
       summary: Zip and Upload Directory
       description: >
-        Zip a directory (excluding specified folders) and upload the resulting archive to S3.
+        Zip a directory (excluding specified folders) and save the resulting archive to local storage.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ZipAndUploadRequest'
+              type: object
+              properties:
+                directory:
+                  type: string
+                project_type:
+                  type: string
+                  enum:
+                    - frontend
+                    - backend
+                    - nextjs
+              required:
+                - directory
+                - project_type
       responses:
         '200':
-          description: Project processed and uploaded.
+          description: Project processed and saved.
         '500':
           description: Error during processing.
   /terminal/{terminal_id}/reset:
