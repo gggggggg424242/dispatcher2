@@ -9,7 +9,7 @@ ENV HOME=/home/ubuntu
 # Install system dependencies: Chromium, bash, sudo, Node.js, npm, pip3, and bc
 # https://gist.github.com/jlia0/db0a9695b3ca7609c9b1a08dcbf872c9#file-modules-L185
 RUN apt-get update && \
-    apt-get install -y chromium bash sudo curl bc && \
+    apt-get install -y chromium python3-venv bash sudo curl bc && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20.18.0 and npm
@@ -29,14 +29,17 @@ RUN useradd -m -s /bin/bash manus
 RUN mkdir -p /opt/.manus/.sandbox-runtime && \
     chown -R ubuntu:ubuntu /opt/.manus
 
+# Set proper permissions for Python directories (must be done as root)
+RUN chmod -R 755 /usr/local/lib/python*
+
+# Switch to non-root user
+USER ubuntu
+
 # Set working directory
 WORKDIR /opt/.manus/.sandbox-runtime
 
 # Copy the repository files into the container
 COPY --chown=ubuntu:ubuntu . /opt/.manus/.sandbox-runtime/
-
-# Switch to non-root user
-USER ubuntu
 
 # Create a Python virtual environment in the working directory
 RUN python -m venv venv
