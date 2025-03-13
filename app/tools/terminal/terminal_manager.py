@@ -126,9 +126,10 @@ class Terminal:
         if not self.history:
             if full_history:
                 return [self.get_prompt_string()]
-            else:
-                return []
-                
+            return []
+
+        return self._get_history_content(append_prompt_line, full_history, max_text_length, max_total_length)
+    def _get_history_content(self, append_prompt_line: bool, full_history: bool, max_text_length: int, max_total_length: int) -> list[str]:
         if not full_history:
             last_item = self.history[-1]
             truncated_text = truncate_text_from_back(last_item.text, max_text_length)
@@ -260,7 +261,6 @@ class Terminal:
         
         for item in self.history:
             item.finished = True
-
     async def send_control(self, cmd_msg: TerminalInputMessage):
         if cmd_msg.mode != "send_control":
             raise AssertionError("mode mismatch")
@@ -294,7 +294,6 @@ class Terminal:
             self.get_history(True, False),
             "running"
         )
-
     async def write_to_process(self, text: str, enter: bool):
         if enter:
             self.user_input_buffer = text + "\n"
@@ -302,7 +301,6 @@ class Terminal:
         else:
             self.user_input_buffer = text
             self.shell.send(text)
-
     async def send_key(self, cmd_msg: TerminalInputMessage):
         if cmd_msg.mode != "send_key":
             raise AssertionError("mode mismatch")
@@ -328,7 +326,6 @@ class Terminal:
             self.get_history(True, False),
             "running"
         )
-
     async def send_line(self, cmd_msg: TerminalInputMessage):
         if cmd_msg.mode != "send_line":
             raise AssertionError("mode mismatch")
@@ -354,18 +351,15 @@ class Terminal:
             self.get_history(True, False),
             "running"
         )
-
     def add_history(self, history: TerminalHistoryItem):
         """Add a command output to the history"""
         self.history.append(history)
         if len(self.history) > 100:
             self.history.pop(0)
-
     def get_prompt_string(self) -> str:
         if not self.prompt_string:
             self.update_prompt_str()
         return self.prompt_string
-
     def update_prompt_str(self):
         self.prompt_string = self._do_get_prompt_from_shell()
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import logging
 from typing import Callable, Dict, Generic, Optional, Type, TypeVar
@@ -28,19 +29,28 @@ from browser_use.utils import time_execution_async, time_execution_sync
 
 logger = logging.getLogger(__name__)
 
-Context = TypeVar('Context')
+Context = TypeVar('Context', bound=BrowserContext)
 
 
 class Controller(Generic[Context]):
     def __init__(
         self,
-        exclude_actions: list[str] = [],
-        output_model: Optional[Type[BaseModel]] = None,
+        exclude_actions: list[str] | None = None,
+        output_model: Type[BaseModel] | None = None,
     ):
         self.exclude_actions = exclude_actions
         self.output_model = output_model
-        self.registry = Registry[Context](exclude_actions)
+        # Type annotation only, don't use type parameter at runtime
+        self.registry: Registry[Context] = Registry(exclude_actions)
         self._register_default_actions()
+        
+    @classmethod
+    def create(cls, context_type: Type[Context] = BrowserContext) -> 'Controller[Context]':
+        """Create a new Controller with the specified context type"""
+        # Use the context_type parameter to create a Controller with the right type annotation
+        # but at runtime, the actual Registry instance doesn't need the type parameter
+        controller = cls()
+        return controller
 
     def _register_default_actions(self):
         """Register all default browser actions"""

@@ -1,6 +1,7 @@
+from __future__ import annotations
 import asyncio
 from inspect import iscoroutinefunction, signature
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, Optional, Type, TypeVar, Generic
 from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import BaseModel, Field, create_model
 from browser_use.browser.context import BrowserContext
@@ -9,13 +10,15 @@ from browser_use.telemetry.service import ProductTelemetry
 from browser_use.telemetry.views import ControllerRegisteredFunctionsTelemetryEvent, RegisteredFunction
 
 
-class Registry:
-    """Service for registering and managing actions"""
+Context = TypeVar('Context', bound='BrowserContext')
 
+class Registry(Generic[Context]):
+    """Service for registering and managing actions"""
+    
     def __init__(self, exclude_actions: list[str] | None = None):
         self.registry = ActionRegistry()
         self.telemetry = ProductTelemetry()
-        self.exclude_actions = exclude_actions if exclude_actions is not None else []
+        self.exclude_actions = exclude_actions or []
 
     def _create_param_model(self, function: Callable) -> Type[BaseModel]:
         """Creates a Pydantic model from function signature"""

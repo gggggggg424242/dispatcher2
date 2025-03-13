@@ -22,9 +22,12 @@ RUN useradd -m -s /bin/bash ubuntu && \
     echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu && \
     chmod 0440 /etc/sudoers.d/ubuntu
 
+# Create manus user
+RUN useradd -m -s /bin/bash manus
+
 # Create the target directory structure and set proper permissions
 RUN mkdir -p /opt/.manus/.sandbox-runtime && \
-    chown -R manus:manus /opt/.manus
+    chown -R ubuntu:ubuntu /opt/.manus
 
 # Set working directory
 WORKDIR /opt/.manus/.sandbox-runtime

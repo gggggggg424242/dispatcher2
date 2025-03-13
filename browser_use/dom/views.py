@@ -1,24 +1,29 @@
-from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING, Dict, List, Optional
 from browser_use.dom.history_tree_processor.view import CoordinateSet, HashedDomElement, ViewportInfo
+from browser_use.utils import time_execution_sync
 
 # Avoid circular import issues
 if TYPE_CHECKING:
     from .views import DOMElementNode
 
 
-@dataclass(frozen=False)
 class DOMBaseNode:
-    is_visible: bool
-    # Use None as default and set parent later to avoid circular reference issues
-    parent: Optional['DOMElementNode'] = None
+    __slots__ = ['is_visible', 'parent']
+    
+    def __init__(self, is_visible: bool, parent: Optional['DOMElementNode'] = None):
+        self.is_visible = is_visible
+        self.parent = parent
 
 
-@dataclass(frozen=False)
-class DOMTextNode(DOMBaseNode):
-    text: str
-    type: str = 'TEXT_NODE'
+class DOMTextNode:
+    __slots__ = ['text', 'is_visible', 'parent', 'type']
+    
+    def __init__(self, text: str, is_visible: bool, parent: Optional['DOMElementNode'] = None, type: str = 'TEXT_NODE'):
+        self.text = text
+        self.is_visible = is_visible
+        self.parent = parent
+        self.type = type
 
     def has_parent_with_highlight_index(self) -> bool:
         current = self.parent
@@ -41,25 +46,48 @@ class DOMTextNode(DOMBaseNode):
         return self.parent.is_top_element
 
 
-@dataclass(frozen=False)
-class DOMElementNode(DOMBaseNode):
+class DOMElementNode:
     """
     xpath: the xpath of the element from the last root node (shadow root or iframe OR document if no shadow root or iframe).
     To properly reference the element we need to recursively switch the root node until we find the element (work you way up the tree with `.parent`)
     """
-
-    tag_name: str
-    xpath: str
-    attributes: Dict[str, str]
-    children: List[DOMBaseNode]
-    is_interactive: bool = False
-    is_top_element: bool = False
-    is_in_viewport: bool = False
-    shadow_root: bool = False
-    highlight_index: Optional[int] = None
-    viewport_coordinates: Optional[CoordinateSet] = None
-    page_coordinates: Optional[CoordinateSet] = None
-    viewport_info: Optional[ViewportInfo] = None
+    __slots__ = [
+        'tag_name', 'xpath', 'attributes', 'children', 'is_visible',
+        'parent', 'is_interactive', 'is_top_element', 'is_in_viewport',
+        'shadow_root', 'highlight_index', 'viewport_coordinates',
+        'page_coordinates', 'viewport_info'
+    ]
+    
+    def __init__(self, 
+        tag_name: str,
+        xpath: str,
+        attributes: Dict[str, str],
+        children: List['DOMBaseNode'],
+        is_visible: bool,
+        parent: Optional['DOMElementNode'] = None,
+        is_interactive: bool = False,
+        is_top_element: bool = False,
+        is_in_viewport: bool = False,
+        shadow_root: bool = False,
+        highlight_index: Optional[int] = None,
+        viewport_coordinates: Optional[CoordinateSet] = None,
+        page_coordinates: Optional[CoordinateSet] = None,
+        viewport_info: Optional[ViewportInfo] = None
+    ):
+        self.tag_name = tag_name
+        self.xpath = xpath
+        self.attributes = attributes
+        self.children = children
+        self.is_visible = is_visible
+        self.parent = parent
+        self.is_interactive = is_interactive
+        self.is_top_element = is_top_element
+        self.is_in_viewport = is_in_viewport
+        self.shadow_root = shadow_root
+        self.highlight_index = highlight_index
+        self.viewport_coordinates = viewport_coordinates
+        self.page_coordinates = page_coordinates
+        self.viewport_info = viewport_info
 
     def __repr__(self) -> str:
         tag_str = f'<{self.tag_name}'
@@ -193,7 +221,7 @@ class ElementTreeSerializer:
     @staticmethod
     def serialize_clickable_elements(element_tree):
         return element_tree.clickable_elements_to_string()
-    
+
     @staticmethod
     def dom_element_node_to_json(element_tree):
         def process_node(node):
@@ -211,14 +239,14 @@ class ElementTreeSerializer:
                     'children': [process_node(child) for child in node.children]
                 }
             return None
-            
+
         return process_node(element_tree)
 
 
 SelectorMap = Dict[int, DOMElementNode]
 
 
-@dataclass
 class DOMState:
-    element_tree: DOMElementNode
-    selector_map: SelectorMap
+    def __init__(self, element_tree: DOMElementNode, selector_map: SelectorMap):
+        self.element_tree = element_tree
+        self.selector_map = selector_map
