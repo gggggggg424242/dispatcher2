@@ -37,7 +37,7 @@ class BrowserManager:
     def __init__(self, *, chrome_instance_path=None, headless=True):
         """
         Initialize the browser manager.
-        
+
         Args:
             chrome_instance_path: Path to Chrome browser instance
             headless: Whether to run the browser in headless mode
@@ -67,26 +67,24 @@ class BrowserManager:
         try:
             browser_config = BrowserConfig(
                 headless=self.headless,
-                chrome_executable_path=self.chrome_instance_path,
-                args=[
+                chrome_instance_path=self.chrome_instance_path,
+                extra_chromium_args=[
                     "--disable-web-security",
                     "--disable-features=IsolateOrigins,site-per-process",
                     "--disable-site-isolation-trials"
                 ]
             )
             browser_context_config = BrowserContextConfig(
-                viewport_width=1280,
-                viewport_height=800,
-                default_timeout_ms=30000,
-                default_navigation_timeout_ms=45000,
+                browser_window_size={'width': 1280, 'height': 800},
                 user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
             )
-            self.browser = await Browser.create(browser_config)
-            self.browser_context = await BrowserContext.create(self.browser, browser_context_config)
+            self.browser = Browser(browser_config)
+            await self.browser._init()
+            self.browser_context = await self.browser.new_context(browser_context_config)
             self.controller = Controller.create(self.browser_context)
 
             # Navigate to a blank page to prepare the context
-            await self.browser_context.goto("about:blank")
+            await self.browser_context.navigate_to("about:blank")
             self.status = "ready"
             logger.info("Browser initialized successfully")
         except Exception as e:
@@ -114,7 +112,7 @@ class BrowserManager:
         """
         Execute a browser action.
         This version waits for the browser to be ready, checks page availability,
-        calls the controller’s act method, updates state, takes screenshots, uploads them,
+        calls the controller's act method, updates state, takes screenshots, uploads them,
         and then returns a BrowserActionResult with extended fields.
         """
         # Ensure browser is ready
@@ -154,7 +152,7 @@ class BrowserManager:
 
             elements = ""
             if hasattr(cached_state, "clickable_elements"):
-                elements = "\n".join(f"{el.index}[:]{el.description}" 
+                elements = "\n".join(f"{el.index}[:]{el.description}"
                                      for el in cached_state.clickable_elements.values())
 
             screenshot_save_path = self.get_screenshot_save_path(cached_state.url)
@@ -273,24 +271,24 @@ class BrowserManager:
         Save screenshots to local storage instead of uploading to S3.
         """
         from app.helpers.local_storage import upload_to_local_storage
-        
+
         screenshots_dir = f"{DEFAULT_WORKING_DIR}/screenshots"
         os.makedirs(screenshots_dir, exist_ok=True)
-        
+
         marked_path = None
         clean_path = None
-        
+
         if cmd.screenshot_presigned_url:
             try:
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 marked_filename = f"marked_{timestamp}.webp"
-                
+
                 result = await upload_to_local_storage(
                     marked_screenshot,
                     marked_filename,
                     "image/webp"
                 )
-                
+
                 if result['success']:
                     marked_path = result['path']
                     logger.info(f"Screenshot saved successfully to {marked_path}")
@@ -305,13 +303,13 @@ class BrowserManager:
             try:
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 clean_filename = f"clean_{timestamp}.webp"
-                
+
                 result = await upload_to_local_storage(
                     clean_screenshot,
                     clean_filename,
                     "image/webp"
                 )
-                
+
                 if result['success']:
                     clean_path = result['path']
                     logger.info(f"Clean screenshot saved successfully to {clean_path}")
@@ -321,5 +319,5 @@ class BrowserManager:
                 logger.error(f"Error saving clean screenshot: {e}")
         else:
             logger.info("No clean screenshot requested, skipped saving")
-        
+
         return marked_path, clean_path

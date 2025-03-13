@@ -8,6 +8,7 @@ class PresignedUrlPart(BaseModel):
 class MultipartUploadRequest(BaseModel):
     file_path: str
     part_size: int
+    filename: Optional[str] = None  # Optional field to specify a different filename
     presigned_urls: List[PresignedUrlPart] = []  # Now optional, as we'll generate them
 
 class PartUploadResult(BaseModel):
